@@ -4,18 +4,52 @@ import Link from "@/components/Link.astro";
 import PageHead from "@/components/PageHead.astro";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/layouts/Layout.astro";
-import { getNowPlaying } from '@/lib/spotify'
-
-const nowPlaying = await getNowPlaying()
-
-
+// 🚫 Remove this, don't do SSR Spotify fetch in .astro anymore
+// import { getNowPlaying } from '@/lib/spotify'
+// const nowPlaying = await getNowPlaying()
 ---
+
 <Layout class="max-w-svh">
   <PageHead slot="head" title="Tags" />
-  <p>Sure! Here's a sample long paragraph of text you can use for testing or filler content:
-In an increasingly interconnected world, the rapid evolution of technology continues to reshape how we live, communicate, and work. From the rise of artificial intelligence to the widespread adoption of remote work, digital transformation has become a defining element of the modern era. Businesses are no longer confined by geography; instead, they are propelled by global networks, cloud infrastructure, and data-driven strategies. As societies become more reliant on technology, questions of ethics, privacy, and digital inclusion grow more urgent. Educational institutions, for example, are rethinking their models to better prepare students for a future where adaptability and continuous learning are paramount. Meanwhile, governments around the globe are grappling with how to regulate emerging technologies without stifling innovation. At the individual level, people are navigating new modes of interaction, often blending their physical and digital lives in ways that would have seemed unimaginable just a decade ago. Despite the challenges, this era offers immense opportunity for creativity, collaboration, and progress—provided we remain mindful of the broader impacts and strive to ensure that the benefits of innovation are shared equitably across all communities.
- 
-Let me know if you'd like it tailored for a specific topic like tech, history, blog post, or lorem ipsum style!
-</p>
-{nowPlaying?.item?.name ?? 'Nothing is playing'}
+  
+  <p>
+    Sure! Here's a sample long paragraph of text you can use for testing or filler content:
+    In an increasingly interconnected world, the rapid evolution of technology continues to reshape how we live, communicate, and work...
+    Let me know if you'd like it tailored for a specific topic like tech, history, blog post, or lorem ipsum style!
+  </p>
+
+  <p><strong>Now Playing:</strong></p>
+  <div id="now-playing">Loading...</div>
+
+  <script type="module">
+    document.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('now-playing');
+      if (!el) return; // ✅ Type-safe null guard
+
+      async function loadNowPlaying() {
+        try {
+          const res = await fetch('/api/spotify');
+          if (!res.ok) {
+            el.textContent = 'Error fetching now playing';
+            return;
+          }
+
+          const data = await res.json();
+
+          if (data?.item?.name) {
+            const artists = data.item.artists.map((a) => a.name).join(', ');
+            el.textContent = `🎵 ${data.item.name} — ${artists}`;
+          } else {
+            el.textContent = 'Nothing is playing';
+          }
+        } catch (err) {
+          console.error('Fetch error:', err);
+          el.textContent = 'Failed to load now playing';
+        }
+      }
+
+      loadNowPlaying();
+      setInterval(loadNowPlaying, 4000);
+    });
+  </script>
 </Layout>
