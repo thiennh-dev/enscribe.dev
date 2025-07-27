@@ -13,32 +13,41 @@ import Layout from "@/layouts/Layout.astro";
   </p>
 
   <p><strong>Now Playing:</strong></p>
-  <div id="now-playing">Loading...</div>
+  <div id="now-playing" class="text-sm p-3 rounded-lg font-mono whitespace-pre-wrap">
+    Loading...
+  </div>
 
   <script type="module">
     document.addEventListener('DOMContentLoaded', () => {
       const el = document.getElementById('now-playing');
-      if (!el) return; // ✅ Type-safe null guard
+      if (!el) return;
 
       async function loadNowPlaying() {
         try {
           const res = await fetch('/api/spotify');
-          if (!res.ok) {
-            el.textContent = 'Error fetching now playing';
+          const data = await res.json();
+
+          if (!data.ok) {
+            el.innerHTML = `
+❌ ${data.message || 'No song playing'}
+Status: ${data.status}
+Fetched at: ${data.fetchedAt}
+            `.trim();
             return;
           }
 
-          const data = await res.json();
+          el.innerHTML = `
+🎵 ${data.name} — ${data.artists}
+Status: ${data.status}
+Fetched at: ${new Date(data.fetchedAt).toLocaleString('en-US', {
+  timeZone: 'Asia/Bangkok',
+  hour12: false,
+})}
 
-          if (data?.item?.name) {
-            const artists = data.item.artists.map((a) => a.name).join(', ');
-            el.textContent = `🎵 ${data.item.name} — ${artists}`;
-          } else {
-            el.textContent = 'Nothing is playing';
-          }
+          `.trim();
         } catch (err) {
           console.error('Fetch error:', err);
-          el.textContent = 'Failed to load now playing';
+          el.textContent = '❌ Failed to fetch now playing info.';
         }
       }
 

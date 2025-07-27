@@ -9,7 +9,7 @@ const {
 
 const basic = Buffer.from(`${client_id}:${client_secret}`).toString('base64')
 
-async function getAccessToken() {
+export async function getAccessToken() {
   const response = await fetch(SPOTIFY_TOKEN_API, {
     method: 'POST',
     headers: {
@@ -20,21 +20,56 @@ async function getAccessToken() {
       grant_type: 'refresh_token',
       refresh_token,
     }),
+    cache: 'no-store', // Don't cache token request
   })
 
-  return response.json()
+  const json = await response.json()
+  console.log('Fetched new access token:', json.access_token ? '✅ success' : '❌ failed')
+  return json
 }
 
 export async function getNowPlaying() {
-  const { access_token } = await getAccessToken()
+  const start = Date.now()
 
-  const res = await fetch(`${SPOTIFY_NOW_PLAYING_API}?additional_types=track,episode`, {
-    headers: {
-      Authorization: `Bearer ${access_token}`,
-    },
-  })
+  try {
+    const { access_token } = await getAccessToken()
+    const url = `${SPOTIFY_NOW_PLAYING_API}?additional_types=track,episode`
 
-  if (res.status === 204 || res.status > 400) return null
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+      cache: 'no-store',
+    })
 
-  return res.json()
+    const timeFetched = new Date().toISOString()
+
+    if (res.status === 204 || res.status > 400) {
+      return {
+        ok: false,
+        fetchedAt: timeFetched,
+        status: res.status,
+        message: 'Nothing is playing or error occurred.',
+      }
+    }
+
+    const data = await res.json()
+
+    return {
+      ok: true,
+      fetchedAt: timeFetched,
+      status: res.status,
+      name: data.item?.name || 'Unknown',
+      artists: data.item?.artists?.map((a: { name: string }) => a.name).join(', '),
+      raw: data,
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      fetchedAt: new Date().toISOString(),
+      status: 0,
+      message: err instanceof Error ? err.message : 'Unknown error',
+    }
+  }
 }
+
