@@ -4,6 +4,9 @@ import Link from "@/components/Link.astro";
 import PageHead from "@/components/PageHead.astro";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/layouts/Layout.astro";
+import { getNowPlaying } from '@/lib/spotify'
+
+const nowPlaying = await getNowPlaying()
 
 
 ---
@@ -14,4 +17,5 @@ In an increasingly interconnected world, the rapid evolution of technology conti
  
 Let me know if you'd like it tailored for a specific topic like tech, history, blog post, or lorem ipsum style!
 </p>
+{nowPlaying?.item?.name ?? 'Nothing is playing'}
 </Layout>
