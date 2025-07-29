@@ -15,14 +15,11 @@ import remarkMath from 'remark-math'
 import rehypeDocument from 'rehype-document'
 import dotenv from 'dotenv';
 import tailwindcss from '@tailwindcss/vite'
-import cloudflare from '@astrojs/cloudflare';
 
 // Load environment variables from .env file
 dotenv.config();
 
 export default defineConfig({
-  output: 'server', 
-  adapter: cloudflare(),
   site: 'https://enscribe.dev',
   integrations: [expressiveCode(), mdx(), react(), sitemap(), icon()],
   vite: {
